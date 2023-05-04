@@ -40,21 +40,25 @@ export default function FileDrawer({
       <div className="bg-gray-600 rounded-lg h-[1px] w-15" />
       {notes &&
         notes.map((note) => (
-          <button
-            type="button"
-            key={note.id}
-            value={note.id}
-            className="cursor-pointer"
-            onClick={(e) => onSelect(parseInt(e.currentTarget.value))}
-          >
-            <p
-              className={`text-lg font-medium w-full px-1 ${
-                note.id == selectedNote?.id ? "bg-gray-500 rounded" : ""
+          <div className="flex flex-col w-full items-start">
+            <button
+              type="button"
+              key={note.id}
+              value={note.id}
+              className={`cursor-pointer w-full ${
+                note.id != selectedNote?.id ? "hover:text-gray-400" : ""
               }`}
+              onClick={(e) => onSelect(parseInt(e.currentTarget.value))}
             >
-              {note.title}
-            </p>
-          </button>
+              <p
+                className={`text-lg text-left font-medium w-full px-1 ${
+                  note.id == selectedNote?.id ? "bg-gray-500 rounded" : ""
+                }`}
+              >
+                {note.title}
+              </p>
+            </button>
+          </div>
         ))}
     </div>
   );
