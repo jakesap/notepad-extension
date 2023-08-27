@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Notepad Extension",
+  "version": "1.0.1",
+  "description": "Notepad Extension is a browser extension that allows users to save notes while browsing the web without switching tabs or windows.",
+  "icons": {
+    "16": "logo.png",
+    "32": "logo.png",
+    "48": "logo.png",
+    "128": "logo.png"
+  },
+  "permissions": ["storage"],
+  "action": {
+    "default_title": "Notepad Extension",
+    "default_icon": "logo.png",
+    "default_popup": "index.html"
+  }
+}
