@@ -1,154 +1,168 @@
 import { useEffect, useState } from "react";
-import Textarea from "./components/Textarea";
+import TextEditorPanel from "./components/TextEditorPanel";
 import browser from "webextension-polyfill";
 import { Note } from "./interfaces";
-import FileDrawer from "./components/FileDrawer";
-import DeleteConfirmationModal from "./components/DeleteConfirmationModal";
-import InfoModal from "./components/InfoModal";
+import { Plus } from "lucide-react";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "./components/ui/context-menu";
 
 export default function Popup() {
   const [saving, setSaving] = useState(false);
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedNote, setSelectedNote] = useState<Note | undefined>();
+  const [rename, setRename] = useState<Note>();
+  const [deleteQueue, setDeleteQueue] = useState<number[]>([]);
 
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [infoModalOpen, setInfoModalOpen] = useState(false);
-
-  const createNote = () => {
-    const newNote = {
-      id: notes[notes.length - 1] ? notes[notes.length - 1].id + 1 : 1,
-      title: "New Note",
-      content: "",
-    };
-    console.log(newNote);
-    setNotes([...notes, newNote]);
-    setSelectedNote(newNote);
-  };
-
-  const deleteNote = () => {
-    console.log("deleting note: ", selectedNote);
-    const newNotes = notes
-      .filter((x) => x.id !== selectedNote?.id)
-      .sort((a, b) => a.id - b.id)
-      .map((x, i) => ({ ...x, id: i }));
-
-    setNotes(newNotes);
-    setSelectedNote(undefined);
-  };
-
-  const save = (newNotes: Note[]) => {
-    if (selectedNote) {
-      const newFilteredNotes = [
-        ...newNotes.filter((x) => x.id !== selectedNote.id),
-        selectedNote,
-      ].sort((a, b) => a.id - b.id);
-      setNotes(newFilteredNotes);
-      browser.storage.local
-        .set({ "notepad-data": newFilteredNotes })
-        .catch((e) => {
-          console.log(e);
-        });
-
-      browser.storage.local
-        .set({ "last-opened": [selectedNote] })
-        .catch((e) => {
-          console.log(e);
-        });
-    } else {
-      browser.storage.local.set({ "notepad-data": notes }).catch((e) => {
-        console.log(e);
-      });
-    }
-  };
-
-  const loadFiles = () => {
+  useEffect(() => {
     browser.storage.local
       .get("notepad-data")
       .then((file) => {
         if (file["notepad-data"]) {
           const loadedFiles = file["notepad-data"] as Note[];
-          setNotes(loadedFiles.sort((a, b) => a.id - b.id));
-          if (loadedFiles[0]) {
+          if (loadedFiles.length > 0) {
             setSelectedNote(loadedFiles[0]);
           }
+          setNotes(loadedFiles.sort((a, b) => a.id - b.id));
         }
       })
       .catch((e) => {
         console.log(e);
       });
-
-    browser.storage.local
-      .get("last-opened")
-      .then((file) => {
-        if (file["last-opened"]) {
-          const loadedFiles = file["last-opened"] as Note[];
-          setSelectedNote(loadedFiles[0]);
-        }
-      })
-      .catch((e) => {
-        console.log(e);
-      });
-  };
-
-  useEffect(() => {
-    loadFiles();
   }, []);
 
   useEffect(() => {
-    const savedNote = notes.find((x) => x.id === selectedNote?.id);
-    if (
-      selectedNote &&
-      savedNote &&
-      (savedNote.content !== selectedNote.content ||
-        savedNote.title !== selectedNote.title)
-    ) {
-      setSaving(true);
-      const t = setTimeout(() => {
-        save(notes);
-        setSaving(false);
-      }, 300);
+    setSaving(true);
+    const t = setTimeout(() => {
+      browser.storage.local.set({ "notepad-data": notes }).catch((e) => {
+        console.log(e);
+      });
+      setSaving(false);
+    }, 300);
 
-      return () => clearTimeout(t);
-    } else if (selectedNote == undefined) {
-      setSaving(true);
-      const t = setTimeout(() => {
-        save(notes);
-        setSaving(false);
-      }, 300);
+    return () => clearTimeout(t);
+  }, [notes, selectedNote]);
 
-      return () => clearTimeout(t);
+  useEffect(() => {
+    if (deleteQueue.length > 0) {
+      setNotes(notes.filter((x) => !deleteQueue.includes(x.id)));
+      setDeleteQueue([]);
     }
-  }, [selectedNote]);
+  }, [deleteQueue]);
 
   return (
-    <div
-      id="popup"
-      className="flex flex-row w-max h-max p-3 space-x-4 bg-gray-800 overflow-hidden font-mono"
-    >
-      <FileDrawer
-        notes={notes}
-        selectedNote={selectedNote}
-        onSelect={(id: number) =>
-          setSelectedNote(notes.find((x) => x.id === id))
-        }
-        onNew={() => createNote()}
-        onDelete={() => setDeleteModalOpen(true)}
-        onInfo={() => setInfoModalOpen(true)}
-      />
-      <Textarea
-        textFile={selectedNote}
-        setTextFile={(file?: Note) => setSelectedNote(file)}
-        saving={saving}
-      />
-      {selectedNote && (
-        <DeleteConfirmationModal
-          isOpen={deleteModalOpen}
-          setIsOpen={setDeleteModalOpen}
+    <div id="popup" className="flex flex-row w-full h-full">
+      <div className="flex flex-col h-full rounded-l border-r text-sm w-[20%] max-w-[20%] min-w-[20%] overflow-x-hidden space-y-3 px-3 py-2">
+        <p className="text-xs text-muted">
+          Right click notes to rename or delete
+        </p>
+        <button
+          className="flex space-x-2 text-sm text-muted-foreground items-center"
+          type="button"
+          onClick={() => {
+            const newNote = {
+              id: notes[notes.length - 1] ? notes[notes.length - 1].id + 1 : 1,
+              title: "New Note",
+              content: "",
+            };
+            console.log(newNote);
+            console.log(notes);
+            setNotes([...notes, newNote]);
+            setSelectedNote(newNote);
+          }}
+        >
+          <Plus className="w-4 h-4 " />
+          <p>Add New</p>
+        </button>
+        <ul className="overflow-y-auto space-y-3 px-1 overflow-x-hidden">
+          {notes &&
+            notes.map((note) => (
+              <li className="items-start font-medium" key={note.id}>
+                {rename && rename?.id === note.id ? (
+                  <input
+                    autoFocus
+                    className="text-foreground bg-background focus-visible:outline-none max-w-full w-full px-1"
+                    value={note.title}
+                    onChange={(e) => {
+                      const newNotes = notes.map((x) =>
+                        x.id === note.id ? { ...x, title: e.target.value } : x
+                      );
+                      setNotes(newNotes);
+                      setSelectedNote(
+                        newNotes.find((x) => x.id === note.id) || undefined
+                      );
+                    }}
+                    onBlur={() => setRename(undefined)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        setRename(undefined);
+                      }
+                    }}
+                  />
+                ) : (
+                  <ContextMenu
+                    onOpenChange={(open) => {
+                      if (open) {
+                        setSelectedNote(note);
+                      }
+                    }}
+                  >
+                    <ContextMenuTrigger
+                      className="cursor-pointer w-full"
+                      onClick={() => {
+                        setSelectedNote(note);
+                      }}
+                    >
+                      <p
+                        title={note.title}
+                        className={`text-left w-full overflow-x-clip px-1 ${
+                          note.id == selectedNote?.id &&
+                          "bg-accent text-accent-foreground rounded"
+                        }`}
+                      >
+                        {note.title}
+                      </p>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent className="w-64">
+                      <ContextMenuItem onClick={() => setRename(note)}>
+                        Rename
+                      </ContextMenuItem>
+                      <ContextMenuSeparator />
+                      <ContextMenuItem
+                        onClick={() =>
+                          setDeleteQueue([...deleteQueue, note.id])
+                        }
+                      >
+                        Delete
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
+                )}
+              </li>
+            ))}
+        </ul>
+      </div>
+      {selectedNote ? (
+        <TextEditorPanel
           note={selectedNote}
-          onDelete={() => deleteNote()}
+          setNote={(note: Note) => {
+            setNotes(
+              notes.map((x) =>
+                x.id === selectedNote?.id ? { ...x, ...note } : x
+              )
+            );
+          }}
+          saving={saving}
         />
+      ) : (
+        <div className="flex justify-center w-full text-muted items-center h-full text-sm">
+          Create a note to get started
+        </div>
       )}
-      <InfoModal isOpen={infoModalOpen} setIsOpen={setInfoModalOpen} />
     </div>
   );
 }
