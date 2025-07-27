@@ -17,6 +17,7 @@ export default function Popup() {
   const [selectedNote, setSelectedNote] = useState<Note | undefined>();
   const [rename, setRename] = useState<Note>();
   const [deleteQueue, setDeleteQueue] = useState<number[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     browser.storage.local
@@ -29,6 +30,7 @@ export default function Popup() {
           }
           setNotes(loadedFiles.sort((a, b) => a.id - b.id));
         }
+        setLoaded(true);
       })
       .catch((e) => {
         console.log(e);
@@ -36,6 +38,7 @@ export default function Popup() {
   }, []);
 
   useEffect(() => {
+    if (!loaded) return;
     setSaving(true);
     const t = setTimeout(() => {
       browser.storage.local.set({ "notepad-data": notes }).catch((e) => {
@@ -51,6 +54,7 @@ export default function Popup() {
     if (deleteQueue.length > 0) {
       setNotes(notes.filter((x) => !deleteQueue.includes(x.id)));
       setDeleteQueue([]);
+      setSelectedNote(undefined);
     }
   }, [deleteQueue]);
 
@@ -69,8 +73,6 @@ export default function Popup() {
               title: "New Note",
               content: "",
             };
-            console.log(newNote);
-            console.log(notes);
             setNotes([...notes, newNote]);
             setSelectedNote(newNote);
           }}
