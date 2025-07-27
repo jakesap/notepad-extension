@@ -20,17 +20,19 @@ export default function Popup() {
 
   useEffect(() => {
     browser.storage.local
-      .get("notepad-data")
+      .get(["notepad-data", "notepad-selected-note-id"])
       .then((file) => {
-        if (file["notepad-data"]) {
-          const loadedFiles = file["notepad-data"] as Note[];
-          if (loadedFiles.length > 0) {
-            setSelectedNote(loadedFiles[0]);
-          }
-          setNotes(loadedFiles.sort((a, b) => a.id - b.id));
-        } else {
-          setNotes([]);
+        const notes = (file["notepad-data"] as Note[]) || [];
+        const selectedNoteId = file["notepad-selected-note-id"] as
+          | number
+          | undefined;
+
+        if (notes.length > 0) {
+          const lastSelectedNote = notes.find((x) => x.id === selectedNoteId);
+          setSelectedNote(lastSelectedNote || notes[0]);
         }
+
+        setNotes(notes.sort((a, b) => a.id - b.id));
       })
       .catch((e) => {
         console.log(e);
@@ -48,7 +50,15 @@ export default function Popup() {
     }, 300);
 
     return () => clearTimeout(t);
-  }, [notes, selectedNote]);
+  }, [notes]);
+
+  useEffect(() => {
+    if (selectedNote) {
+      browser.storage.local.set({
+        "notepad-selected-note-id": selectedNote.id,
+      });
+    }
+  }, [selectedNote]);
 
   useEffect(() => {
     if (deleteQueue.length > 0) {
@@ -92,6 +102,7 @@ export default function Popup() {
                     className="text-foreground bg-background focus-visible:outline-none max-w-full w-full px-1"
                     value={note.title}
                     onChange={(e) => {
+                      if (!notes) return;
                       const newNotes = notes.map((x) =>
                         x.id === note.id ? { ...x, title: e.target.value } : x
                       );
