@@ -13,11 +13,10 @@ import {
 
 export default function Popup() {
   const [saving, setSaving] = useState(false);
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [notes, setNotes] = useState<Note[] | null>(null);
   const [selectedNote, setSelectedNote] = useState<Note | undefined>();
   const [rename, setRename] = useState<Note>();
   const [deleteQueue, setDeleteQueue] = useState<number[]>([]);
-  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     browser.storage.local
@@ -29,8 +28,9 @@ export default function Popup() {
             setSelectedNote(loadedFiles[0]);
           }
           setNotes(loadedFiles.sort((a, b) => a.id - b.id));
+        } else {
+          setNotes([]);
         }
-        setLoaded(true);
       })
       .catch((e) => {
         console.log(e);
@@ -38,7 +38,7 @@ export default function Popup() {
   }, []);
 
   useEffect(() => {
-    if (!loaded) return;
+    if (notes === null) return;
     setSaving(true);
     const t = setTimeout(() => {
       browser.storage.local.set({ "notepad-data": notes }).catch((e) => {
@@ -52,6 +52,7 @@ export default function Popup() {
 
   useEffect(() => {
     if (deleteQueue.length > 0) {
+      if (!notes) return;
       setNotes(notes.filter((x) => !deleteQueue.includes(x.id)));
       setDeleteQueue([]);
       setSelectedNote(undefined);
@@ -68,6 +69,7 @@ export default function Popup() {
           className="flex space-x-2 text-sm text-muted-foreground items-center"
           type="button"
           onClick={() => {
+            if (!notes) return;
             const newNote = {
               id: notes[notes.length - 1] ? notes[notes.length - 1].id + 1 : 1,
               title: "New Note",
@@ -152,6 +154,7 @@ export default function Popup() {
         <TextEditorPanel
           note={selectedNote}
           setNote={(note: Note) => {
+            if (!notes) return;
             setNotes(
               notes.map((x) =>
                 x.id === selectedNote?.id ? { ...x, ...note } : x
