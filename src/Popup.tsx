@@ -10,6 +10,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "./components/ui/context-menu";
+import { SidebarComponent } from "./components/Sidebar";
 
 export default function Popup() {
   const [saving, setSaving] = useState(false);
@@ -70,97 +71,14 @@ export default function Popup() {
   }, [deleteQueue]);
 
   return (
-    <div id="popup" className="flex flex-row w-full h-full">
-      <div className="flex flex-col h-full rounded-l border-r text-sm w-[20%] max-w-[20%] min-w-[20%] overflow-x-hidden space-y-3 px-3 py-2">
-        <p className="text-xs text-muted">
-          Right click notes to rename or delete
-        </p>
-        <button
-          className="flex space-x-2 text-sm text-muted-foreground items-center"
-          type="button"
-          onClick={() => {
-            if (!notes) return;
-            const newNote = {
-              id: notes[notes.length - 1] ? notes[notes.length - 1].id + 1 : 1,
-              title: "New Note",
-              content: "",
-            };
-            setNotes([...notes, newNote]);
-            setSelectedNote(newNote);
-          }}
-        >
-          <Plus className="w-4 h-4 " />
-          <p>Add New</p>
-        </button>
-        <ul className="overflow-y-auto space-y-3 px-1 overflow-x-hidden">
-          {notes &&
-            notes.map((note) => (
-              <li className="items-start font-medium" key={note.id}>
-                {rename && rename?.id === note.id ? (
-                  <input
-                    autoFocus
-                    className="text-foreground bg-background focus-visible:outline-none max-w-full w-full px-1"
-                    value={note.title}
-                    onChange={(e) => {
-                      if (!notes) return;
-                      const newNotes = notes.map((x) =>
-                        x.id === note.id ? { ...x, title: e.target.value } : x
-                      );
-                      setNotes(newNotes);
-                      setSelectedNote(
-                        newNotes.find((x) => x.id === note.id) || undefined
-                      );
-                    }}
-                    onBlur={() => setRename(undefined)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        setRename(undefined);
-                      }
-                    }}
-                  />
-                ) : (
-                  <ContextMenu
-                    onOpenChange={(open) => {
-                      if (open) {
-                        setSelectedNote(note);
-                      }
-                    }}
-                  >
-                    <ContextMenuTrigger
-                      className="cursor-pointer w-full"
-                      onClick={() => {
-                        setSelectedNote(note);
-                      }}
-                    >
-                      <p
-                        title={note.title}
-                        className={`text-left w-full overflow-x-clip px-1 ${
-                          note.id == selectedNote?.id &&
-                          "bg-accent text-accent-foreground rounded"
-                        }`}
-                      >
-                        {note.title}
-                      </p>
-                    </ContextMenuTrigger>
-                    <ContextMenuContent className="w-64">
-                      <ContextMenuItem onClick={() => setRename(note)}>
-                        Rename
-                      </ContextMenuItem>
-                      <ContextMenuSeparator />
-                      <ContextMenuItem
-                        onClick={() =>
-                          setDeleteQueue([...deleteQueue, note.id])
-                        }
-                      >
-                        Delete
-                      </ContextMenuItem>
-                    </ContextMenuContent>
-                  </ContextMenu>
-                )}
-              </li>
-            ))}
-        </ul>
-      </div>
+    <div id="popup" className="flex flex-row w-full h-[29rem]">
+      <SidebarComponent
+        notes={notes}
+        setNotes={setNotes}
+        selectedNote={selectedNote}
+        setSelectedNote={setSelectedNote}
+      />
+
       {selectedNote ? (
         <TextEditorPanel
           note={selectedNote}

@@ -27,6 +27,8 @@ import {
 import { Dialog, DialogTrigger, DialogContent, DialogClose } from "./ui/dialog";
 import { buttonVariants } from "./ui/button";
 import { Input } from "./ui/input";
+import { SidebarTrigger } from "./ui/sidebar";
+import { Separator } from "./ui/separator";
 
 interface TextEditorProps {
   note: Note;
@@ -108,19 +110,26 @@ export default function TextEditorPanel({
     return null;
   }
   return (
-    <div className="flex flex-col h-[29rem] w-[80%]">
+    <div className="flex flex-col h-full w-full">
       <div className="flex h-full w-full flex-col px-3 py-2">
         <div className="space-y-2 h-full">
           <div className="flex w-full space-x-2 items-center">
+            <SidebarTrigger
+              title="Toggle sidebar"
+              className="text-muted-foreground w-5 h-5"
+            />
+            <Separator orientation="vertical" />
             <button
               onClick={() => editor.chain().focus().undo().run()}
               disabled={!editor.can().undo()}
+              title="Undo"
             >
               <RotateCcw className="text-muted-foreground w-5 h-5" />
             </button>
             <button
               onClick={() => editor.chain().focus().redo().run()}
               disabled={!editor.can().redo()}
+              title="Redo"
             >
               <RotateCw className="text-muted-foreground w-5 h-5" />
             </button>
@@ -129,6 +138,7 @@ export default function TextEditorPanel({
                 className={`p-1
                   ${editor.isActive("link") ? "bg-accent rounded" : ""}
                 `}
+                title="Link"
               >
                 <Link2 className="text-muted-foreground w-5 h-5" />
               </DialogTrigger>
@@ -164,6 +174,7 @@ export default function TextEditorPanel({
                   ${editor.isActive("bold") ? "bg-accent rounded" : ""}
                 `}
               onClick={toggleBold}
+              title="Bold"
             >
               <BoldIcon className="text-muted-foreground w-5 h-5" />
             </button>
@@ -172,6 +183,7 @@ export default function TextEditorPanel({
                   ${editor.isActive("underline") ? "bg-accent rounded" : ""}
                 `}
               onClick={toggleUnderline}
+              title="Underline"
             >
               <UnderlineIcon className="text-muted-foreground w-5 h-5" />
             </button>
@@ -180,6 +192,7 @@ export default function TextEditorPanel({
                   ${editor.isActive("italic") ? "bg-accent rounded" : ""}
                 `}
               onClick={toggleItalic}
+              title="Italic"
             >
               <ItalicIcon className="text-muted-foreground w-5 h-5" />
             </button>
@@ -188,6 +201,7 @@ export default function TextEditorPanel({
                   ${editor.isActive("strike") ? "bg-accent rounded" : ""}
                 `}
               onClick={toggleStrike}
+              title="Strikethrough"
             >
               <Strikethrough className="text-muted-foreground w-5 h-5" />
             </button>
@@ -196,6 +210,7 @@ export default function TextEditorPanel({
                   ${editor.isActive("code") ? "bg-accent rounded" : ""}
                 `}
               onClick={toggleCode}
+              title="Code"
             >
               <Code2Icon className="text-muted-foreground w-5 h-5" />
             </button>
