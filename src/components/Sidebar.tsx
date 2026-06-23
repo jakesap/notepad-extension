@@ -11,7 +11,8 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { Note } from "@/interfaces";
-import { Plus } from "lucide-react";
+import { GripVertical, Plus } from "lucide-react";
+import { useState } from "react";
 interface SidebarProps {
   notes: Note[] | null;
   setNotes: React.Dispatch<React.SetStateAction<Note[] | null>>;
@@ -24,6 +25,23 @@ export function SidebarComponent({
   selectedNote,
   setSelectedNote,
 }: SidebarProps) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+
+  const handleDrop = (toIndex: number) => {
+    if (!notes || dragIndex === null || dragIndex === toIndex) {
+      setDragIndex(null);
+      setOverIndex(null);
+      return;
+    }
+    const reordered = [...notes];
+    const [moved] = reordered.splice(dragIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+    setNotes(reordered);
+    setDragIndex(null);
+    setOverIndex(null);
+  };
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -50,13 +68,35 @@ export function SidebarComponent({
           <SidebarGroupLabel>Notes</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {notes?.map((note) => (
-                <SidebarMenuItem key={note.id}>
+              {notes?.map((note, index) => (
+                <SidebarMenuItem
+                  key={note.id}
+                  draggable
+                  onDragStart={() => setDragIndex(index)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (overIndex !== index) setOverIndex(index);
+                  }}
+                  onDrop={() => handleDrop(index)}
+                  onDragEnd={() => {
+                    setDragIndex(null);
+                    setOverIndex(null);
+                  }}
+                  className={
+                    dragIndex === index
+                      ? "opacity-50"
+                      : overIndex === index
+                      ? "border-t-2 border-primary"
+                      : undefined
+                  }
+                >
                   <SidebarMenuButton
                     isActive={note.id == selectedNote?.id}
                     onClick={() => setSelectedNote(note)}
+                    className="group/note"
                   >
-                    {note.title}
+                    <GripVertical className="w-4 h-4 shrink-0 cursor-grab text-muted-foreground opacity-0 group-hover/note:opacity-100" />
+                    <span className="truncate">{note.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

@@ -33,7 +33,7 @@ export default function Popup() {
           setSelectedNote(lastSelectedNote || notes[0]);
         }
 
-        setNotes(notes.sort((a, b) => a.id - b.id));
+        setNotes(notes);
       })
       .catch((e) => {
         console.log(e);
