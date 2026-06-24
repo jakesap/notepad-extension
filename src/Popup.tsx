@@ -2,22 +2,12 @@ import { useEffect, useState } from "react";
 import TextEditorPanel from "./components/TextEditorPanel";
 import browser from "webextension-polyfill";
 import { Note } from "./interfaces";
-import { Plus } from "lucide-react";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
-} from "./components/ui/context-menu";
 import { SidebarComponent } from "./components/Sidebar";
 
 export default function Popup() {
   const [saving, setSaving] = useState(false);
   const [notes, setNotes] = useState<Note[] | null>(null);
   const [selectedNote, setSelectedNote] = useState<Note | undefined>();
-  const [rename, setRename] = useState<Note>();
-  const [deleteQueue, setDeleteQueue] = useState<number[]>([]);
 
   useEffect(() => {
     browser.storage.local
@@ -60,15 +50,6 @@ export default function Popup() {
       });
     }
   }, [selectedNote]);
-
-  useEffect(() => {
-    if (deleteQueue.length > 0) {
-      if (!notes) return;
-      setNotes(notes.filter((x) => !deleteQueue.includes(x.id)));
-      setDeleteQueue([]);
-      setSelectedNote(undefined);
-    }
-  }, [deleteQueue]);
 
   return (
     <div id="popup" className="flex flex-row w-full h-[29rem]">
